@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSI Header Referenz – Interaktive Lernseite</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F8FAFC; --card: #FFFFFF; --text: #1E293B; --text2: #475569;
+    --text3: #64748B; --text4: #94A3B8; --border: #E2E8F0; --border2: #F1F5F9;
+    --heading: #0F172A; --subtle-bg: #F8FAFC;
+  }
+
+  body {
+    min-height: 100vh; background: var(--bg); color: var(--text);
+    font-family: 'JetBrains Mono','Fira Code','Source Code Pro', monospace;
+  }
+
+  .dot-grid {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.35;
+    background-image: radial-gradient(circle, #CBD5E1 0.8px, transparent 0.8px);
+    background-size: 24px 24px;
+  }
+
+  .container { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 28px 20px 40px; }
+
+  /* Title */
+  .badge {
+    display: inline-block; border-radius: 6px; padding: 4px 14px;
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase; font-weight: 600; margin-bottom: 12px;
+  }
+  h1 { font-family: 'DM Sans', sans-serif; font-size: clamp(26px, 4.5vw, 42px); font-weight: 700; color: var(--heading); line-height: 1.15; }
+  .subtitle { color: var(--text3); font-size: 14px; margin-top: 8px; line-height: 1.5; }
+
+  /* Tabs */
+  .tab-bar { display: flex; gap: 6px; margin-bottom: 28px; overflow-x: auto; padding-bottom: 4px; justify-content: center; flex-wrap: wrap; }
+  .tab-btn {
+    display: flex; align-items: center; gap: 6px; padding: 10px 18px; border-radius: 10px;
+    border: 1px solid var(--border); cursor: pointer; transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    background: var(--card); color: var(--text2);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .tab-btn:hover { transform: translateY(-1px); }
+  .tab-btn.active { color: #FFF; border: none; transform: translateY(-1px); }
+  .tab-btn .layer-badge {
+    font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 700;
+  }
+
+  /* Header info */
+  .header-info { text-align: center; margin-bottom: 20px; }
+  .header-info h2 { font-family: 'DM Sans', sans-serif; font-size: 22px; font-weight: 700; color: var(--heading); margin: 0 0 4px; }
+  .header-info .sub { font-size: 12px; color: var(--text3); }
+  .header-info .bytes { font-size: 11px; color: var(--text4); margin-top: 4px; }
+
+  /* Bit ruler */
+  .bit-ruler { display: grid; grid-template-columns: 60px repeat(32, 1fr); gap: 0; margin-bottom: 2px; }
+  .bit-ruler .num { text-align: center; font-size: 7px; color: var(--text4); font-weight: 400; padding-bottom: 3px; }
+  .bit-ruler .num.major { font-weight: 700; }
+
+  /* Diagram rows */
+  .diagram-row { display: grid; grid-template-columns: 60px repeat(32, 1fr); gap: 0; margin-bottom: 2px; }
+  .row-label { font-size: 8px; color: var(--text4); display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; font-weight: 500; }
+
+  .field-box {
+    background: var(--card); border: 1.5px solid var(--border); border-radius: 6px;
+    padding: 10px 6px; cursor: pointer; transition: all 0.2s;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 54px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+  .field-box:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+  .field-box .fname { font-weight: 600; text-align: center; line-height: 1.2; transition: color 0.2s; color: #334155; }
+  .field-box .fbits { font-size: 8px; color: var(--text4); margin-top: 2px; }
+
+  /* Detail card */
+  .detail-card {
+    background: var(--card); border-radius: 14px; padding: 26px 30px; margin-bottom: 28px;
+    animation: fadeSlide 0.25s ease;
+  }
+  @keyframes fadeSlide { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .detail-header { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .detail-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .detail-header h3 { font-family: 'DM Sans', sans-serif; font-size: 20px; font-weight: 700; color: var(--heading); }
+  .detail-header .full-name { font-size: 13px; color: var(--text4); font-style: italic; }
+  .detail-header .bit-badge { margin-left: auto; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .detail-desc { color: var(--text2); line-height: 1.8; font-size: 13.5px; margin-bottom: 18px; white-space: pre-line; }
+
+  .detail-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+  .example-box, .analogy-box { border-radius: 10px; padding: 14px 18px; }
+  .analogy-box { background: #F1F5F9; border: 1px solid var(--border); }
+  .box-label { font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: var(--text4); margin-bottom: 5px; font-weight: 600; }
+  .box-value { font-size: 13px; font-weight: 600; }
+  .analogy-box .box-value { font-weight: 500; color: #334155; }
+
+  .placeholder {
+    background: var(--card); border: 1.5px dashed var(--border); border-radius: 14px;
+    padding: 22px; text-align: center; color: var(--text4); font-size: 13px; margin-bottom: 28px;
+  }
+
+  /* Summary table */
+  .summary-title { font-family: 'DM Sans', sans-serif; font-size: 17px; font-weight: 700; color: var(--heading); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .summary-table { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.04); margin-bottom: 28px; }
+  .summary-head {
+    display: grid; grid-template-columns: minmax(120px,1fr) 55px minmax(100px,1fr) minmax(160px,2fr);
+    padding: 11px 16px; background: var(--subtle-bg); border-bottom: 1px solid var(--border);
+    font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: var(--text4); font-weight: 700;
+  }
+  .summary-row {
+    display: grid; grid-template-columns: minmax(120px,1fr) 55px minmax(100px,1fr) minmax(160px,2fr);
+    padding: 10px 16px; cursor: pointer; transition: all 0.15s; border-bottom: 1px solid var(--border2);
+  }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-row:hover { background: #FAFBFC; }
+  .summary-row .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; opacity: 0.45; transition: opacity 0.15s; }
+  .summary-row:hover .dot { opacity: 1; }
+  .summary-row .s-name { font-size: 12px; font-weight: 600; color: var(--text); transition: color 0.15s; display: flex; align-items: center; gap: 7px; }
+  .summary-row .s-bits { text-align: center; font-size: 11px; color: var(--text3); font-weight: 500; }
+  .summary-row .s-short { font-size: 11px; color: var(--text3); }
+  .summary-row .s-analogy { font-size: 11px; color: var(--text4); line-height: 1.45; }
+
+  /* Facts */
+  .facts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 24px; }
+  .fact-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 16px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+  .fact-icon { font-size: 20px; margin-bottom: 4px; }
+  .fact-value { font-family: 'DM Sans', sans-serif; font-size: 18px; font-weight: 700; }
+  .fact-label { font-size: 11px; font-weight: 600; color: #334155; margin-top: 2px; }
+  .fact-detail { font-size: 10px; color: var(--text4); margin-top: 3px; }
+
+  /* OSI strip */
+  .osi-strip {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+  .osi-strip .osi-label { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: var(--text4); font-weight: 600; margin-bottom: 10px; }
+  .osi-layers { display: flex; gap: 4px; flex-wrap: wrap; }
+  .osi-layer {
+    flex: 1; min-width: 90px; text-align: center; padding: 8px 6px; border-radius: 8px;
+    background: var(--subtle-bg); border: 1.5px solid var(--border); transition: all 0.2s;
+  }
+  .osi-layer .l-num { font-size: 10px; font-weight: 700; color: var(--text4); }
+  .osi-layer .l-name { font-size: 9px; font-weight: 600; color: var(--text4); }
+  .osi-layer .l-protos { font-size: 8px; color: var(--text4); margin-top: 2px; }
+
+  .footer { text-align: center; color: #CBD5E1; font-size: 10px; padding: 12px 0; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<div class="dot-grid"></div>
+
+<div class="container">
+  <!-- Title -->
+  <div style="text-align:center;margin-bottom:28px">
+    <div class="badge" id="topBadge">OSI Header Referenz · Interaktiv</div>
+    <h1>Protokoll-Header verstehen</h1>
+    <p class="subtitle">Wähle ein Protokoll und klicke auf die Felder für Details</p>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tab-bar" id="tabBar"></div>
+
+  <!-- Header info -->
+  <div class="header-info" id="headerInfo"></div>
+
+  <!-- Bit ruler -->
+  <div class="bit-ruler" id="bitRuler"></div>
+
+  <!-- Diagram -->
+  <div id="diagram" style="margin-bottom:28px"></div>
+
+  <!-- Detail card -->
+  <div id="detailCard"></div>
+
+  <!-- Summary table -->
+  <div id="summarySection"></div>
+
+  <!-- Facts -->
+  <div id="factsGrid"></div>
+
+  <!-- OSI strip -->
+  <div class="osi-strip" id="osiStrip"></div>
+
+  <!-- Footer -->
+  <div class="footer">OSI Header Referenz · Ethernet · IPv4 · IPv6 · TCP · UDP · ARP</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════
+
+const tabs = [
+  { id:"ethernet", label:"Ethernet", layer:2, color:"#0D9488", icon:"🔌" },
+  { id:"ipv4",     label:"IPv4",     layer:3, color:"#2563EB", icon:"🌐" },
+  { id:"ipv6",     label:"IPv6",     layer:3, color:"#7C3AED", icon:"🌍" },
+  { id:"tcp",      label:"TCP",      layer:4, color:"#DC2626", icon:"🤝" },
+  { id:"udp",      label:"UDP",      layer:4, color:"#D97706", icon:"⚡" },
+  { id:"arp",      label:"ARP",      layer:2, color:"#059669", icon:"🔍" },
+];
+
+const allHeaders = {
+  ethernet: {
+    title:"Ethernet II Frame Header", subtitle:"IEEE 802.3 · Layer 2 · Data Link",
+    minBytes:"14 Bytes (ohne VLAN) · 18 Bytes (mit VLAN-Tag)",
+    fields: [
+      {id:"eth_pre",name:"Preamble",bits:56,cols:32,row:0,color:"#0D9488",short:"Synchronisation",desc:"7 Bytes alternierendes Bitmuster (10101010…). Dient der Taktsynchronisation zwischen Sender und Empfänger auf physischer Ebene. Wird vor dem eigentlichen Frame gesendet.",example:"10101010 10101010 … (7×)",analogy:"Wie das Klopfen an der Tür, bevor man reinkommt – «Achtung, gleich kommen Daten!»"},
+      {id:"eth_sfd",name:"SFD",fullName:"Start Frame Delimiter",bits:8,cols:32,row:1,color:"#14B8A6",short:"Frame-Start",desc:"1 Byte (10101011) – markiert das Ende der Preamble und den Beginn des eigentlichen Frames. Das letzte Bit wechselt auf 1, um den Start zu signalisieren.",example:"10101011",analogy:"Das Startzeichen nach dem Klopfen – «Jetzt geht's wirklich los!»"},
+      {id:"eth_dst",name:"Destination MAC",fullName:"Ziel-MAC-Adresse",bits:48,cols:32,row:2,color:"#0E7490",short:"Empfänger-MAC",desc:"48-Bit Hardware-Adresse des Empfängers. Kann Unicast (einzelnes Gerät), Multicast (Gruppe) oder Broadcast (FF:FF:FF:FF:FF:FF, alle Geräte) sein. Switches nutzen dieses Feld für die Weiterleitung.",example:"AA:BB:CC:DD:EE:FF",analogy:"Der Name auf dem Briefkasten – der Switch schaut hier nach, an welchen Port das Frame geht."},
+      {id:"eth_src",name:"Source MAC",fullName:"Quell-MAC-Adresse",bits:48,cols:32,row:3,color:"#0891B2",short:"Absender-MAC",desc:"48-Bit Hardware-Adresse des Absenders. Wird vom Netzwerkadapter (NIC) gesetzt und ist weltweit eindeutig. Erste 3 Bytes = OUI (Hersteller), letzte 3 Bytes = Geräte-ID.",example:"00:1A:2B:3C:4D:5E (OUI: 00:1A:2B = Hersteller)",analogy:"Der Absender auf dem Umschlag – der Switch lernt dadurch, wo der Absender sitzt."},
+      {id:"eth_vlan",name:"802.1Q Tag",fullName:"VLAN-Tag (optional)",bits:32,cols:32,row:4,color:"#06B6D4",short:"VLAN-Zuordnung",desc:"Optionales 4-Byte Feld für VLAN-Tagging:\n• TPID (16 Bit): 0x8100 kennzeichnet VLAN-Tag\n• PCP (3 Bit): Priority Code Point (QoS)\n• DEI (1 Bit): Drop Eligible Indicator\n• VID (12 Bit): VLAN-ID (0–4095)",example:"TPID=0x8100, VID=100 → VLAN 100",analogy:"Wie eine Abteilungsnummer im Büro – trennt Netzwerke logisch, obwohl sie am selben Switch hängen."},
+      {id:"eth_type",name:"EtherType",fullName:"Typ / Länge",bits:16,cols:32,row:5,color:"#0D9488",short:"Protokoll-Kennung",desc:"Identifiziert das Protokoll der nächsten Schicht:\n• 0x0800 = IPv4\n• 0x86DD = IPv6\n• 0x0806 = ARP\n• 0x8100 = VLAN-Tag\n\nWert ≤ 1500: Wird als Längenfeld interpretiert (IEEE 802.3).\nWert ≥ 1536: Wird als EtherType interpretiert (Ethernet II).",example:"0x0800 → IPv4-Paket folgt",analogy:"Wie der Vermerk «Inhalt: Zerbrechlich» – sagt dem Empfänger, was drin ist."},
+    ],
+    facts:[
+      {label:"Min. Frame-Grösse",value:"64 Bytes",detail:"Inkl. Header + Payload + FCS",icon:"📏"},
+      {label:"Max. Frame-Grösse",value:"1518 Bytes",detail:"Standard MTU (1522 mit VLAN)",icon:"📐"},
+      {label:"MAC-Adresslänge",value:"48 Bit",detail:"≈ 281 Billionen Adressen",icon:"🏷️"},
+      {label:"Jumbo Frames",value:"9000+ Bytes",detail:"In Rechenzentren üblich",icon:"📦"},
+    ]
+  },
+  ipv4: {
+    title:"IPv4 Header",subtitle:"RFC 791 · Layer 3 · Network",
+    minBytes:"Min. 20 Bytes · Max. 60 Bytes · 13 Felder",
+    fields:[
+      {id:"version",name:"Version",bits:4,cols:4,row:0,color:"#2563EB",short:"IPv4 = 4",desc:"Gibt die IP-Protokollversion an. Bei IPv4 steht hier immer der Wert 4 (binär: 0100). Dieses Feld ermöglicht es Routern, sofort zu erkennen, wie der Rest des Headers zu interpretieren ist.",example:"Wert: 4 (0100)",analogy:"Wie die Sprache auf einem Brief – der Router weiss sofort: «Ah, das ist IPv4-Format.»"},
+      {id:"ihl",name:"IHL",fullName:"Internet Header Length",bits:4,cols:4,row:0,color:"#3B82F6",short:"Header-Länge",desc:"Definiert die Länge des IP-Headers in 32-Bit-Wörtern (je 4 Bytes). Der Minimalwert ist 5 (= 20 Bytes, Header ohne Optionen), der Maximalwert ist 15 (= 60 Bytes, Header mit Optionen).",example:"Wert 5 → 5 × 4 = 20 Bytes",analogy:"Sagt dem Empfänger: «Ab hier beginnen die eigentlichen Nutzdaten.»"},
+      {id:"dscp",name:"DSCP / ECN",fullName:"Differentiated Services / ECN",bits:8,cols:8,row:0,color:"#1D4ED8",short:"QoS-Markierung",desc:"DSCP (6 Bit): Markiert Pakete für Quality of Service (QoS), z. B. Priorisierung von VoIP-Verkehr.\nECN (2 Bit): Explicit Congestion Notification – signalisiert Stau im Netz, ohne Pakete zu verwerfen.",example:"DSCP 46 = EF (Expedited Forwarding) für VoIP",analogy:"Wie ein Priority-Sticker auf einem Paket – manche Sendungen werden bevorzugt behandelt."},
+      {id:"totallength",name:"Total Length",fullName:"Gesamtlänge",bits:16,cols:16,row:0,color:"#60A5FA",short:"Paketgrösse gesamt",desc:"Gibt die Gesamtlänge des IP-Pakets in Bytes an (Header + Daten). Maximalwert: 65'535 Bytes. Die minimale Grösse beträgt 20 Bytes (nur Header, keine Daten).",example:"Wert 1500 → Standard-MTU in Ethernet",analogy:"Wie die Gewichtsangabe auf einem Paket – damit der Empfänger weiss, wie viel Daten insgesamt kommen."},
+      {id:"identification",name:"Identification",fullName:"Identifikation",bits:16,cols:16,row:1,color:"#2563EB",short:"Fragment-ID",desc:"Eindeutige Kennung für ein IP-Paket. Alle Fragmente eines ursprünglichen Pakets tragen dieselbe ID, damit der Empfänger sie wieder korrekt zusammensetzen kann.",example:"z. B. ID = 54321",analogy:"Wie eine Bestellnummer – wenn ein grosses Paket in mehrere Teile zerlegt wird, haben alle Teile dieselbe Nummer."},
+      {id:"flags",name:"Flags",bits:3,cols:3,row:1,color:"#1E40AF",short:"Fragment-Flags",desc:"3 Kontroll-Bits für die Fragmentierung:\n• Bit 0: Reserviert (immer 0)\n• Bit 1 (DF): Don't Fragment – Paket darf nicht fragmentiert werden\n• Bit 2 (MF): More Fragments – es folgen weitere Fragmente",example:"DF=1, MF=0 → «Nicht fragmentieren, letztes/einziges Paket»",analogy:"Wie ein Aufkleber «NICHT TEILEN» oder «Fortsetzung folgt» auf einem Paket."},
+      {id:"fragoffset",name:"Frag Offset",fullName:"Fragment Offset",bits:13,cols:13,row:1,color:"#3B82F6",short:"Position im Original",desc:"Gibt die Position dieses Fragments innerhalb des ursprünglichen Pakets an, gemessen in 8-Byte-Blöcken. Das erste Fragment hat Offset 0.",example:"Offset 185 → Position 185 × 8 = 1480 Bytes",analogy:"Wie die Seitenzahl in einem Buch – damit man weiss, wo dieses Fragment hingehört."},
+      {id:"ttl",name:"TTL",fullName:"Time to Live",bits:8,cols:8,row:2,color:"#2563EB",short:"Hop-Limit",desc:"Zähler, der bei jedem Router (Hop) um 1 reduziert wird. Erreicht er 0, wird das Paket verworfen und eine ICMP-Fehlermeldung gesendet. Verhindert, dass Pakete endlos im Netz kreisen.",example:"Startwert oft 64 oder 128",analogy:"Wie ein Countdown-Ticket: «Du darfst noch 64 Stationen fahren, dann wirst du entsorgt.»"},
+      {id:"protocol",name:"Protocol",fullName:"Protokoll",bits:8,cols:8,row:2,color:"#60A5FA",short:"Transport-Protokoll",desc:"Identifiziert das Protokoll der nächsthöheren Schicht:\n• 1 = ICMP\n• 6 = TCP\n• 17 = UDP\n• 47 = GRE\n• 89 = OSPF",example:"Wert 6 → TCP (z. B. HTTP, SSH)",analogy:"Wie die Abteilungsangabe auf einem internen Brief – «Dieses Paket geht an die TCP-Abteilung.»"},
+      {id:"checksum",name:"Header Checksum",fullName:"Header-Prüfsumme",bits:16,cols:16,row:2,color:"#1D4ED8",short:"Fehlerprüfung",desc:"Prüfsumme nur über den IP-Header (nicht die Nutzdaten!). Wird bei jedem Hop neu berechnet, da sich das TTL-Feld ändert. In IPv6 wurde dieses Feld entfernt.",example:"16-Bit Einerkomplement-Summe",analogy:"Wie eine Quersumme auf einer Rechnung – stimmt sie nicht, wurde etwas verfälscht."},
+      {id:"srcip",name:"Source IP",fullName:"Quell-IP-Adresse",bits:32,cols:32,row:3,color:"#3B82F6",short:"Absender",desc:"Die 32-Bit IPv4-Adresse des Absenders. Wird vom sendenden Host gesetzt und bleibt während der Übertragung unverändert (Ausnahme: NAT).",example:"192.168.1.100 → C0.A8.01.64 (hex)",analogy:"Die Absenderadresse auf einem Brief."},
+      {id:"dstip",name:"Destination IP",fullName:"Ziel-IP-Adresse",bits:32,cols:32,row:4,color:"#2563EB",short:"Empfänger",desc:"Die 32-Bit IPv4-Adresse des Empfängers. Router nutzen dieses Feld, um die Weiterleitungsentscheidung (Routing) zu treffen.",example:"10.0.0.1 → 0A.00.00.01 (hex)",analogy:"Die Empfängeradresse auf einem Brief – bestimmt den Weg durch das Netz."},
+      {id:"options",name:"Options + Padding",fullName:"Optionen & Auffüllung",bits:"0–320",cols:32,row:5,color:"#1E40AF",short:"Optional",desc:"Optionale Felder, die selten genutzt werden:\n• Record Route: Zeichnet den Weg auf\n• Timestamp: Zeitstempel an jedem Hop\n• Loose/Strict Source Routing\n\nPadding füllt auf ein Vielfaches von 32 Bit auf.",example:"Meist leer → IHL = 5",analogy:"Wie ein Zusatzblatt im Briefumschlag – meistens leer, aber manchmal mit Sonderwünschen."},
+    ],
+    facts:[
+      {label:"Min. Headergrösse",value:"20 Bytes",detail:"Ohne Optionen (IHL = 5)",icon:"📏"},
+      {label:"Max. Headergrösse",value:"60 Bytes",detail:"Mit Optionen (IHL = 15)",icon:"📐"},
+      {label:"Max. Paketgrösse",value:"65'535 Bytes",detail:"Total Length = 16 Bit",icon:"📦"},
+      {label:"Adresslänge",value:"32 Bit",detail:"≈ 4.3 Milliarden Adressen",icon:"🌐"},
+    ]
+  },
+  ipv6: {
+    title:"IPv6 Header",subtitle:"RFC 8200 · Layer 3 · Network",
+    minBytes:"Immer 40 Bytes · 8 Felder · Vereinfacht gegenüber IPv4",
+    fields:[
+      {id:"v6_ver",name:"Version",bits:4,cols:4,row:0,color:"#7C3AED",short:"IPv6 = 6",desc:"Gibt die IP-Protokollversion an. Bei IPv6 steht hier immer der Wert 6 (binär: 0110).",example:"Wert: 6 (0110)",analogy:"Wie bei IPv4 – der Router erkennt sofort das Format."},
+      {id:"v6_tc",name:"Traffic Class",fullName:"Verkehrsklasse",bits:8,cols:8,row:0,color:"#8B5CF6",short:"QoS-Markierung",desc:"Entspricht dem DSCP/ECN-Feld in IPv4. Ermöglicht Priorisierung und QoS-Markierung des Pakets:\n• 6 Bit DSCP (Differentiated Services)\n• 2 Bit ECN (Stausignalisierung)",example:"DSCP 46 = EF für Echtzeit-Verkehr",analogy:"Identisch zum IPv4-DSCP – der Priority-Sticker für das Paket."},
+      {id:"v6_fl",name:"Flow Label",fullName:"Fluss-Kennung",bits:20,cols:20,row:0,color:"#6D28D9",short:"Fluss-Identifikation",desc:"Neu in IPv6! Kennzeichnet zusammengehörige Pakete eines Datenflusses. Router können damit Pakete desselben Flusses gleich behandeln, ohne tiefer in den Header schauen zu müssen.",example:"z. B. 0xA1B2C für einen VoIP-Call",analogy:"Wie eine Vorgangsnummer – alle Pakete eines Video-Calls bekommen dieselbe Nummer für schnellere Verarbeitung."},
+      {id:"v6_pl",name:"Payload Length",fullName:"Nutzlast-Länge",bits:16,cols:16,row:1,color:"#7C3AED",short:"Datenlänge",desc:"Länge der Nutzlast in Bytes (ohne den 40-Byte-Header selbst!). Im Gegensatz zu IPv4 Total Length wird hier nur die Payload gezählt. Max: 65'535 Bytes (Jumbograms via Extension Header möglich).",example:"Wert 1460 → TCP-Segment",analogy:"Sagt nur, wie schwer der Inhalt ist – der Umschlag (Header) wird nicht mitgezählt."},
+      {id:"v6_nh",name:"Next Header",fullName:"Nächster Header",bits:8,cols:8,row:1,color:"#8B5CF6",short:"Nächstes Protokoll",desc:"Ersetzt das Protocol-Feld aus IPv4 UND ermöglicht Extension Headers:\n• 6 = TCP\n• 17 = UDP\n• 58 = ICMPv6\n• 43 = Routing Header\n• 44 = Fragment Header\n\nExtension Headers werden wie eine Kette aneinandergehängt.",example:"Wert 6 → TCP folgt direkt",analogy:"Wie ein Wegweiser: «Als nächstes kommt…» – kann auf ein Transport-Protokoll oder einen weiteren Header zeigen."},
+      {id:"v6_hl",name:"Hop Limit",bits:8,cols:8,row:1,color:"#6D28D9",short:"Hop-Zähler",desc:"Funktioniert wie TTL in IPv4: Wird bei jedem Router um 1 verringert. Bei 0 wird das Paket verworfen. Der Name ist ehrlicher – es zählt Hops, nicht Zeit.",example:"Startwert: 64 oder 128",analogy:"Exakt wie TTL – der Countdown-Zähler für maximale Hops."},
+      {id:"v6_src",name:"Source Address",fullName:"Quell-IPv6-Adresse",bits:128,cols:32,row:2,color:"#7C3AED",short:"Absender (128 Bit!)",desc:"128-Bit IPv6-Adresse des Absenders. Darstellung in 8 Gruppen zu je 4 Hex-Ziffern. Bietet einen astronomisch grossen Adressraum: 2¹²⁸ ≈ 3.4 × 10³⁸ Adressen.",example:"2001:0db8:85a3::8a2e:0370:7334",analogy:"Die Absenderadresse – aber mit viel, viel mehr Platz als bei IPv4."},
+      {id:"v6_dst",name:"Destination Address",fullName:"Ziel-IPv6-Adresse",bits:128,cols:32,row:3,color:"#8B5CF6",short:"Empfänger (128 Bit!)",desc:"128-Bit IPv6-Adresse des Empfängers. Router nutzen dieses Feld für Routing-Entscheidungen. Unterstützt Unicast, Multicast und Anycast (kein Broadcast mehr!).",example:"fe80::1 (Link-Local)",analogy:"Die Empfängeradresse – bestimmt den Weg, kein Broadcast mehr nötig dank Multicast."},
+    ],
+    facts:[
+      {label:"Headergrösse",value:"40 Bytes",detail:"Immer fix – keine Optionen im Basisheader",icon:"📏"},
+      {label:"Adresslänge",value:"128 Bit",detail:"3.4 × 10³⁸ Adressen",icon:"🌍"},
+      {label:"Kein Broadcast",value:"Multicast",detail:"Broadcast durch Multicast ersetzt",icon:"📡"},
+      {label:"Keine Checksum",value:"Entfernt",detail:"Layer 2 & 4 prüfen bereits",icon:"✅"},
+    ]
+  },
+  tcp: {
+    title:"TCP Header",subtitle:"RFC 9293 · Layer 4 · Transport",
+    minBytes:"Min. 20 Bytes · Max. 60 Bytes · Verbindungsorientiert & zuverlässig",
+    fields:[
+      {id:"tcp_sp",name:"Source Port",fullName:"Quell-Port",bits:16,cols:16,row:0,color:"#DC2626",short:"Absender-Port",desc:"16-Bit Portnummer des Absenders. Identifiziert die sendende Anwendung. Ephemeral Ports (49152–65535) werden dynamisch vom Betriebssystem vergeben.",example:"Port 49321 (Ephemeral)",analogy:"Wie die Zimmernummer des Absenders – damit die Antwort zurückfindet."},
+      {id:"tcp_dp",name:"Dest Port",fullName:"Ziel-Port",bits:16,cols:16,row:0,color:"#EF4444",short:"Ziel-Port",desc:"16-Bit Portnummer des Empfängers. Identifiziert den Dienst/die Anwendung:\n• 80 = HTTP\n• 443 = HTTPS\n• 22 = SSH\n• 25 = SMTP\n• 53 = DNS",example:"Port 443 → HTTPS",analogy:"Wie die Abteilung beim Empfänger – «Bitte an die Webserver-Abteilung weiterleiten.»"},
+      {id:"tcp_seq",name:"Sequence Number",fullName:"Sequenznummer",bits:32,cols:32,row:1,color:"#DC2626",short:"Byte-Position",desc:"Gibt die Position des ersten Datenbytes in diesem Segment im Gesamtdatenstrom an. Beim Verbindungsaufbau (SYN) wird eine zufällige Initial Sequence Number (ISN) gewählt.",example:"SEQ = 1000 → «Daten ab Byte 1000»",analogy:"Wie die Seitenzahl im Buch – der Empfänger weiss genau, welches Stück Daten das ist."},
+      {id:"tcp_ack",name:"Acknowledgment Nr.",fullName:"Bestätigungsnummer",bits:32,cols:32,row:2,color:"#B91C1C",short:"Bestätigung",desc:"Enthält die nächste erwartete Sequenznummer vom Gegenüber. Bestätigt damit alle Bytes bis zu dieser Nummer. Nur gültig, wenn das ACK-Flag gesetzt ist.",example:"ACK = 1001 → «Alles bis Byte 1000 erhalten»",analogy:"Die Quittung: «Alles bis hierhin angekommen, schick mir den nächsten Teil.»"},
+      {id:"tcp_doff",name:"Data Offset",bits:4,cols:4,row:3,color:"#DC2626",short:"Header-Länge",desc:"Länge des TCP-Headers in 32-Bit-Wörtern (wie IHL bei IPv4). Minimum 5 (20 Bytes), Maximum 15 (60 Bytes). Zeigt, wo die Nutzdaten beginnen.",example:"Wert 5 → 20 Bytes Header",analogy:"Sagt dem Empfänger: «Ab hier kommen die echten Daten.»"},
+      {id:"tcp_res",name:"Reserv.",fullName:"Reserviert",bits:4,cols:4,row:3,color:"#F87171",short:"Ungenutzt",desc:"4 reservierte Bits, die auf 0 gesetzt werden müssen. Für zukünftige Erweiterungen vorgesehen.",example:"Immer 0000",analogy:"Freie Plätze für die Zukunft."},
+      {id:"tcp_flags",name:"Flags",fullName:"TCP-Flags (Steuer-Bits)",bits:8,cols:8,row:3,color:"#B91C1C",short:"Steuer-Flags",desc:"8 Kontroll-Bits, die den Zustand der Verbindung steuern:\n• SYN: Verbindungsaufbau\n• ACK: Bestätigung\n• FIN: Verbindungsabbau\n• RST: Reset/Abbruch\n• PSH: Sofort an Anwendung übergeben\n• URG: Dringende Daten\n• ECE/CWR: Staukontrolle",example:"SYN+ACK → Schritt 2 des 3-Way-Handshake",analogy:"Wie Handzeichen beim Dirigieren – SYN = «Hallo?», ACK = «Verstanden!», FIN = «Tschüss!»"},
+      {id:"tcp_win",name:"Window Size",fullName:"Fenstergrösse",bits:16,cols:16,row:3,color:"#EF4444",short:"Empfangspuffer",desc:"Gibt an, wie viele Bytes der Empfänger noch aufnehmen kann (Flusskontrolle). Der Sender darf nicht mehr Daten senden, als das Window erlaubt.",example:"Window = 65535 (max ohne Scaling)",analogy:"Wie ein Briefkasten mit begrenztem Platz – «Ich habe noch Platz für 65 KB!»"},
+      {id:"tcp_csum",name:"Checksum",fullName:"Prüfsumme",bits:16,cols:16,row:4,color:"#DC2626",short:"Fehlerprüfung",desc:"Prüfsumme über TCP-Header, Daten UND ein Pseudo-Header (Quell-/Ziel-IP, Protokoll, Länge). Pflichtfeld bei TCP.",example:"16-Bit Einerkomplement",analogy:"Wie ein Siegel auf dem Brief – wurde etwas verändert, stimmt das Siegel nicht mehr."},
+      {id:"tcp_urg",name:"Urgent Pointer",fullName:"Dringlichkeitszeiger",bits:16,cols:16,row:4,color:"#B91C1C",short:"Dringende Daten",desc:"Nur gültig wenn URG-Flag gesetzt. Zeigt auf das Ende der dringenden Daten im Segment. Wird in der Praxis selten verwendet.",example:"Zeigt auf das letzte dringende Byte",analogy:"Wie ein «EILIG»-Vermerk mit Pfeil – «Bis hierhin ist es dringend!»"},
+      {id:"tcp_opt",name:"Options + Padding",fullName:"Optionen & Auffüllung",bits:"0–320",cols:32,row:5,color:"#F87171",short:"Optionale Erweiterungen",desc:"Wichtige TCP-Optionen:\n• MSS: Maximum Segment Size (bei SYN)\n• Window Scale: Erweitert Window Size\n• SACK: Selective Acknowledgment\n• Timestamps: RTT-Messung\n\nPadding füllt auf 32-Bit-Grenze auf.",example:"MSS 1460 (Standard bei Ethernet)",analogy:"Verhandlungspunkte beim Verbindungsaufbau – «Ich kann maximal 1460 Bytes pro Segment.»"},
+    ],
+    facts:[
+      {label:"Min. Headergrösse",value:"20 Bytes",detail:"Ohne Optionen (Data Offset = 5)",icon:"📏"},
+      {label:"Portbereich",value:"0–65535",detail:"Well-Known: 0–1023",icon:"🚪"},
+      {label:"Verbindungsaufbau",value:"3-Way Handshake",detail:"SYN → SYN-ACK → ACK",icon:"🤝"},
+      {label:"Zuverlässigkeit",value:"Garantiert",detail:"Sequenz, ACK, Retransmission",icon:"✅"},
+    ]
+  },
+  udp: {
+    title:"UDP Header",subtitle:"RFC 768 · Layer 4 · Transport",
+    minBytes:"Immer 8 Bytes · 4 Felder · Verbindungslos & schnell",
+    fields:[
+      {id:"udp_sp",name:"Source Port",fullName:"Quell-Port",bits:16,cols:16,row:0,color:"#D97706",short:"Absender-Port",desc:"16-Bit Portnummer des Absenders. Optional bei UDP – kann auf 0 gesetzt werden, wenn keine Antwort erwartet wird.",example:"Port 51234 (Ephemeral)",analogy:"Rücksendeadresse – optional, weil UDP keine Antwort garantiert."},
+      {id:"udp_dp",name:"Dest Port",fullName:"Ziel-Port",bits:16,cols:16,row:0,color:"#F59E0B",short:"Ziel-Port",desc:"16-Bit Portnummer des Empfängers:\n• 53 = DNS\n• 67/68 = DHCP\n• 69 = TFTP\n• 123 = NTP\n• 161 = SNMP\n• 500 = IKE (VPN)",example:"Port 53 → DNS-Anfrage",analogy:"Die Abteilung beim Empfänger – «An die DNS-Abteilung bitte.»"},
+      {id:"udp_len",name:"Length",fullName:"Länge",bits:16,cols:16,row:1,color:"#D97706",short:"Gesamtlänge",desc:"Gesamtlänge des UDP-Datagramms in Bytes (Header + Daten). Minimum: 8 Bytes (nur Header, keine Daten). Maximum: 65'535 Bytes.",example:"Wert 512 → DNS-Antwort",analogy:"Gewichtsangabe auf dem Paket – Header plus Inhalt zusammen."},
+      {id:"udp_csum",name:"Checksum",fullName:"Prüfsumme",bits:16,cols:16,row:1,color:"#F59E0B",short:"Fehlerprüfung",desc:"Prüfsumme über UDP-Header, Daten und Pseudo-Header. Bei IPv4 optional (kann 0 sein), bei IPv6 Pflicht!",example:"0x0000 → Keine Prüfung (nur IPv4)",analogy:"Optionaler Qualitätscheck – bei IPv4 darf man darauf verzichten, bei IPv6 nicht."},
+    ],
+    facts:[
+      {label:"Headergrösse",value:"8 Bytes",detail:"Immer fix – 4 Felder à 16 Bit",icon:"📏"},
+      {label:"Verbindung",value:"Keine",detail:"Verbindungslos (Connectionless)",icon:"📨"},
+      {label:"Zuverlässigkeit",value:"Keine",detail:"Kein ACK, keine Reihenfolge",icon:"🎲"},
+      {label:"Einsatz",value:"DNS, VoIP, Gaming",detail:"Wo Geschwindigkeit > Zuverlässigkeit",icon:"⚡"},
+    ]
+  },
+  arp: {
+    title:"ARP Header",subtitle:"RFC 826 · Layer 2/3 · Address Resolution",
+    minBytes:"28 Bytes (für IPv4/Ethernet) · Löst IP → MAC auf",
+    fields:[
+      {id:"arp_htype",name:"Hardware Type",fullName:"Hardware-Typ",bits:16,cols:16,row:0,color:"#059669",short:"Netzwerk-Typ",desc:"Gibt den Typ des Netzwerks an:\n• 1 = Ethernet (häufigster Wert)\n• 6 = IEEE 802\n• 15 = Frame Relay",example:"Wert 1 → Ethernet",analogy:"«In welcher Sprache ist die Hardware-Adresse?» – Fast immer Ethernet."},
+      {id:"arp_ptype",name:"Protocol Type",fullName:"Protokoll-Typ",bits:16,cols:16,row:0,color:"#10B981",short:"Protokoll",desc:"Gibt das Protokoll an, dessen Adresse aufgelöst werden soll. Nutzt dieselben Werte wie EtherType:\n• 0x0800 = IPv4",example:"0x0800 → IPv4-Adresse auflösen",analogy:"«Welche Sorte Adresse suchst du?» – Meistens IPv4."},
+      {id:"arp_hlen",name:"HLen",fullName:"Hardware Address Length",bits:8,cols:8,row:1,color:"#059669",short:"MAC-Länge",desc:"Länge der Hardware-Adresse in Bytes. Bei Ethernet immer 6 (= 48 Bit MAC-Adresse).",example:"Wert 6 → 6 Bytes = 48 Bit MAC",analogy:"Sagt: «Die MAC-Adresse ist 6 Bytes lang.»"},
+      {id:"arp_plen",name:"PLen",fullName:"Protocol Address Length",bits:8,cols:8,row:1,color:"#10B981",short:"IP-Länge",desc:"Länge der Protokoll-Adresse in Bytes. Bei IPv4 immer 4 (= 32 Bit IP-Adresse).",example:"Wert 4 → 4 Bytes = 32 Bit IPv4",analogy:"Sagt: «Die IP-Adresse ist 4 Bytes lang.»"},
+      {id:"arp_op",name:"Operation",fullName:"Opcode",bits:16,cols:16,row:1,color:"#047857",short:"Anfrage / Antwort",desc:"Bestimmt den ARP-Nachrichtentyp:\n• 1 = ARP Request (Anfrage)\n• 2 = ARP Reply (Antwort)\n• 3 = RARP Request\n• 4 = RARP Reply",example:"Opcode 1 → «Wer hat diese IP?»",analogy:"Wie die Frage auf einem Zettel: «Wer bist du?» (Request) oder «Hier bin ich!» (Reply)."},
+      {id:"arp_sha",name:"Sender MAC",fullName:"Sender Hardware Address",bits:48,cols:32,row:2,color:"#059669",short:"Absender-MAC",desc:"MAC-Adresse des Absenders. Bei einem ARP-Request die MAC des fragenden Geräts. Bei einem ARP-Reply die gesuchte MAC-Adresse.",example:"00:1A:2B:3C:4D:5E",analogy:"«Meine Visitenkarte – das bin ich auf Layer 2.»"},
+      {id:"arp_spa",name:"Sender IP",fullName:"Sender Protocol Address",bits:32,cols:32,row:3,color:"#10B981",short:"Absender-IP",desc:"IP-Adresse des Absenders. Der Empfänger nutzt diese, um seinen ARP-Cache zu aktualisieren.",example:"192.168.1.10",analogy:"«Und das ist meine IP-Adresse dazu.»"},
+      {id:"arp_tha",name:"Target MAC",fullName:"Target Hardware Address",bits:48,cols:32,row:4,color:"#047857",short:"Ziel-MAC",desc:"MAC-Adresse des Ziels. Bei einem ARP-Request auf 00:00:00:00:00:00 gesetzt (unbekannt). Bei einem Reply die tatsächliche MAC.",example:"00:00:00:00:00:00 (bei Request)",analogy:"«Deine MAC-Adresse kenne ich noch nicht – genau die suche ich!»"},
+      {id:"arp_tpa",name:"Target IP",fullName:"Target Protocol Address",bits:32,cols:32,row:5,color:"#059669",short:"Ziel-IP",desc:"IP-Adresse des gesuchten Geräts. Alle Geräte im Netzwerk prüfen, ob diese IP zu ihnen gehört.",example:"192.168.1.1 (z. B. Gateway)",analogy:"«Wer von euch hat diese IP? Bitte melden!»"},
+    ],
+    facts:[
+      {label:"Headergrösse",value:"28 Bytes",detail:"Für IPv4 über Ethernet",icon:"📏"},
+      {label:"ARP-Cache",value:"Temporär",detail:"Einträge verfallen nach Timeout",icon:"⏱️"},
+      {label:"Broadcast",value:"Request",detail:"ARP-Request → FF:FF:FF:FF:FF:FF",icon:"📢"},
+      {label:"Sicherheit",value:"Kein Schutz",detail:"Anfällig für ARP-Spoofing",icon:"⚠️"},
+    ]
+  }
+};
+
+const osiLayers = [
+  {l:7,name:"Application",protos:"HTTP, DNS, SMTP"},
+  {l:6,name:"Presentation",protos:"SSL/TLS, JPEG"},
+  {l:5,name:"Session",protos:"NetBIOS, RPC"},
+  {l:4,name:"Transport",protos:"TCP, UDP"},
+  {l:3,name:"Network",protos:"IPv4, IPv6, ICMP, ARP*"},
+  {l:2,name:"Data Link",protos:"Ethernet, Wi-Fi, ARP*"},
+  {l:1,name:"Physical",protos:"Kabel, Funk, Licht"},
+];
+
+// ═══════════════════════════════════════════════════
+// STATE & RENDER
+// ═══════════════════════════════════════════════════
+
+let activeTab = "ethernet";
+let selectedField = null;
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function hexAlpha(hex, alpha) { return hex + Math.round(alpha * 255).toString(16).padStart(2, '0'); }
+
+function getTab() { return tabs.find(t => t.id === activeTab); }
+function getData() { return allHeaders[activeTab]; }
+
+function switchTab(id) { activeTab = id; selectedField = null; render(); }
+function selectField(id) { selectedField = selectedField === id ? null : id; renderDetail(); renderSummaryHighlight(); }
+
+function render() {
+  renderTabs();
+  renderHeaderInfo();
+  renderBitRuler();
+  renderDiagram();
+  renderDetail();
+  renderSummary();
+  renderFacts();
+  renderOSI();
+  // Update badge
+  const tab = getTab();
+  const badge = document.getElementById('topBadge');
+  badge.style.background = hexAlpha(tab.color, 0.07);
+  badge.style.border = `1px solid ${hexAlpha(tab.color, 0.19)}`;
+  badge.style.color = tab.color;
+}
+
+function renderTabs() {
+  const bar = document.getElementById('tabBar');
+  bar.innerHTML = tabs.map(t => {
+    const active = activeTab === t.id;
+    return `<button class="tab-btn ${active?'active':''}" onclick="switchTab('${t.id}')"
+      style="${active ? `background:${t.color};box-shadow:0 4px 16px ${hexAlpha(t.color,0.22)};border:none;` : ''}">
+      <span style="font-size:15px">${t.icon}</span>${t.label}
+      <span class="layer-badge" style="background:${active?'rgba(255,255,255,0.25)':hexAlpha(t.color,0.09)};color:${active?'#FFF':t.color};">L${t.layer}</span>
+    </button>`;
+  }).join('');
+}
+
+function renderHeaderInfo() {
+  const d = getData();
+  document.getElementById('headerInfo').innerHTML = `
+    <h2>${esc(d.title)}</h2>
+    <p class="sub">${esc(d.subtitle)}</p>
+    <p class="bytes">${esc(d.minBytes)}</p>`;
+}
+
+function renderBitRuler() {
+  const tab = getTab();
+  let html = '<div></div>';
+  for (let i = 0; i < 32; i++) {
+    const major = i % 8 === 0;
+    html += `<div class="num ${major?'major':''}" style="${major?`color:${tab.color};border-bottom:1.5px solid ${hexAlpha(tab.color,0.25)};`:''}">${i}</div>`;
+  }
+  document.getElementById('bitRuler').innerHTML = html;
+}
+
+function renderDiagram() {
+  const data = getData();
+  // Group by row
+  const rowMap = {};
+  data.fields.forEach(f => { if (!rowMap[f.row]) rowMap[f.row] = []; rowMap[f.row].push(f); });
+  const rowKeys = Object.keys(rowMap).sort((a,b)=>a-b);
+
+  let html = '';
+  rowKeys.forEach((rk, ri) => {
+    html += `<div class="diagram-row"><div class="row-label">Row ${ri}</div>`;
+    rowMap[rk].forEach(f => {
+      const isSel = selectedField === f.id;
+      const fs = f.cols < 6 ? 8 : 11;
+      html += `<div class="field-box" style="grid-column:span ${f.cols};
+        ${isSel ? `background:${hexAlpha(f.color,0.06)};border-color:${f.color};box-shadow:0 2px 12px ${hexAlpha(f.color,0.13)};` : ''}
+        " onclick="selectField('${f.id}')"
+        onmouseenter="this.style.borderColor='${hexAlpha(f.color,0.37)}';this.querySelector('.fname').style.color='${f.color}'"
+        onmouseleave="this.style.borderColor='${isSel?f.color:'#E2E8F0'}';this.querySelector('.fname').style.color='${isSel?f.color:'#334155'}'">
+        <div class="fname" style="font-size:${fs}px;${isSel?`color:${f.color};`:''}">${esc(f.name)}</div>
+        <div class="fbits">${f.bits} Bit</div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  document.getElementById('diagram').innerHTML = html;
+}
+
+function renderDetail() {
+  const data = getData();
+  const card = document.getElementById('detailCard');
+  if (!selectedField) {
+    card.innerHTML = '<div class="placeholder">↑ Klicke auf ein Feld im Diagramm für Details</div>';
+    return;
+  }
+  const f = data.fields.find(x => x.id === selectedField);
+  if (!f) { card.innerHTML = ''; return; }
+
+  card.innerHTML = `<div class="detail-card" style="border:1.5px solid ${hexAlpha(f.color,0.19)};box-shadow:0 4px 24px ${hexAlpha(f.color,0.06)}, 0 1px 4px rgba(0,0,0,0.04);">
+    <div class="detail-header">
+      <div class="detail-dot" style="background:${f.color};box-shadow:0 0 8px ${hexAlpha(f.color,0.31)};"></div>
+      <h3>${esc(f.name)}</h3>
+      ${f.fullName ? `<span class="full-name">(${esc(f.fullName)})</span>` : ''}
+      <span class="bit-badge" style="background:${hexAlpha(f.color,0.07)};color:${f.color};">${f.bits} Bit</span>
+    </div>
+    <div class="detail-desc">${esc(f.desc)}</div>
+    <div class="detail-boxes">
+      <div class="example-box" style="background:${hexAlpha(f.color,0.04)};border:1px solid ${hexAlpha(f.color,0.09)};">
+        <div class="box-label">Beispiel</div>
+        <div class="box-value" style="color:${f.color};">${esc(f.example)}</div>
+      </div>
+      <div class="analogy-box">
+        <div class="box-label">Analogie</div>
+        <div class="box-value">${esc(f.analogy)}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderSummary() {
+  const data = getData();
+  const tab = getTab();
+  let html = `<div class="summary-title"><span style="color:${tab.color}">⚡</span> Alle Felder auf einen Blick</div>
+  <div class="summary-table">
+    <div class="summary-head"><div>Feld</div><div style="text-align:center">Bits</div><div>Kurzinfo</div><div>Analogie</div></div>`;
+
+  data.fields.forEach((f, i) => {
+    const isSel = selectedField === f.id;
+    html += `<div class="summary-row" data-field="${f.id}" onclick="selectField('${f.id}')"
+      style="${isSel ? `background:${hexAlpha(f.color,0.05)};` : ''}${i===data.fields.length-1?'border-bottom:none;':''}">
+      <div class="s-name"><div class="dot" style="background:${f.color};${isSel?'opacity:1;':''}"></div>
+        <span style="${isSel?`color:${f.color};`:''}">${esc(f.name)}</span></div>
+      <div class="s-bits">${f.bits}</div>
+      <div class="s-short">${esc(f.short)}</div>
+      <div class="s-analogy">${esc(f.analogy)}</div>
+    </div>`;
+  });
+
+  html += '</div>';
+  document.getElementById('summarySection').innerHTML = html;
+}
+
+function renderSummaryHighlight() {
+  // Re-render summary to update highlights
+  renderSummary();
+  // Also re-render diagram to update highlights
+  renderDiagram();
+}
+
+function renderFacts() {
+  const data = getData();
+  const tab = getTab();
+  let html = '';
+  data.facts.forEach(f => {
+    html += `<div class="fact-card">
+      <div class="fact-icon">${f.icon}</div>
+      <div class="fact-value" style="color:${tab.color}">${esc(f.value)}</div>
+      <div class="fact-label">${esc(f.label)}</div>
+      <div class="fact-detail">${esc(f.detail)}</div>
+    </div>`;
+  });
+  document.getElementById('factsGrid').innerHTML = `<div class="facts-grid">${html}</div>`;
+}
+
+function renderOSI() {
+  const tab = getTab();
+  let html = '<div class="osi-label">OSI Einordnung</div><div class="osi-layers">';
+  osiLayers.forEach(layer => {
+    const isActive = layer.l === tab.layer || (activeTab === 'arp' && (layer.l === 2 || layer.l === 3));
+    html += `<div class="osi-layer" style="${isActive ? `background:${hexAlpha(tab.color,0.06)};border-color:${tab.color};` : ''}">
+      <div class="l-num" style="${isActive?`color:${tab.color};`:''}">L${layer.l}</div>
+      <div class="l-name" style="${isActive?'color:#0F172A;':''}">${layer.name}</div>
+      <div class="l-protos">${layer.protos}</div>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('osiStrip').innerHTML = html;
+}
+
+// Initial render
+render();
+</script>
+</body>
+</html>
